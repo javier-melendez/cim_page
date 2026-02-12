@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Casino Royal - Derby & Ruleta</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Montserrat:wght@300;400;700;900&display=swap');
+
+        :root {
+            --gold: #fcc200;
+            --gold-glow: rgba(252, 194, 0, 0.4);
+            --bg-dark: #0a0a0c;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: var(--bg-dark);
+            background-image: radial-gradient(circle at center, #1a1a2e 0%, #050505 100%);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .font-casino { font-family: 'Cinzel', serif; }
+
+        .vip-panel {
+            background: rgba(20, 20, 25, 0.8);
+            border: 1px solid rgba(252, 194, 0, 0.2);
+            backdrop-filter: blur(12px);
+            border-radius: 1.5rem;
+        }
+
+        #race-canvas {
+            filter: drop-shadow(0 0 20px rgba(0, 0, 0, 0.5));
+            border-radius: 50%;
+        }
+
+        .bet-card {
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .bet-card.selected {
+            border-color: var(--gold);
+            background: linear-gradient(145deg, rgba(252, 194, 0, 0.15), transparent);
+            transform: scale(1.02);
+            box-shadow: 0 0 20px var(--gold-glow);
+        }
+
+        .neon-btn {
+            background: linear-gradient(to right, #d4af37, #fcc200);
+            color: #000;
+            font-weight: 900;
+            letter-spacing: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .neon-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 25px var(--gold-glow);
+        }
+
+        .neon-btn:disabled {
+            filter: grayscale(1);
+            opacity: 0.5;
+        }
+
+        #wheel-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 0 auto;
+        }
+        #wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 5px solid #d4af37;
+            transition: transform 4s cubic-bezier(0.15, 0, 0.15, 1);
+            overflow: hidden;
+        }
+        .wheel-pointer {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 30px solid #fcc200;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body class="p-2 md:p-6">
+
+    <div class="max-w-7xl mx-auto">
+        <header class="flex flex-col lg:flex-row justify-between items-center mb-8 gap-6">
+            <div class="text-center lg:text-left">
+                <h1 class="font-casino text-4xl md:text-6xl text-yellow-500 tracking-tighter">GOLDEN CIRCLE</h1>
+                <p class="uppercase text-[10px] tracking-[0.5em] opacity-50 font-bold">Derby Realista & Multiplicadores</p>
+            </div>
+
+            <div class="flex gap-4">
+                <div class="vip-panel px-6 py-3 text-center border-b-4 border-yellow-600">
+                    <p class="text-[10px] uppercase opacity-60">Tu Saldo</p>
+                    <p id="balance" class="text-3xl font-black text-green-400">$5,000</p>
+                </div>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div class="lg:col-span-4 space-y-4">
+                <div class="vip-panel p-5">
+                    <h2 class="font-casino text-xl text-yellow-500 mb-4 border-b border-white/10 pb-2">Mercado</h2>
+                    <div id="horse-selectors" class="space-y-2 mb-6 max-h-[400px] overflow-y-auto pr-2"></div>
+
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center bg-black/40 p-3 rounded-lg">
+                            <button onclick="adjustBet(-500)" class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20">-</button>
+                            <span id="bet-amount" class="text-2xl font-black">$500</span>
+                            <button onclick="adjustBet(500)" class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20">+</button>
+                        </div>
+                        <button id="race-btn" onclick="startRace()" class="neon-btn w-full py-5 rounded-xl text-lg uppercase">Apostar Todo</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-8 flex flex-col items-center justify-center">
+                <div class="relative w-full max-w-[600px] aspect-square">
+                    <canvas id="race-canvas" class="w-full h-full"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="result-modal" class="fixed inset-0 bg-black/95 z-50 hidden flex items-center justify-center p-6">
+        <div class="vip-panel max-w-lg w-full p-8 text-center border-2 border-yellow-500">
+            <div id="modal-content-results">
+                <div id="modal-icon" class="text-6xl mb-2">🏆</div>
+                <h2 id="modal-title" class="font-casino text-3xl text-yellow-500 mb-2">RESULTADOS</h2>
+                <div id="modal-body" class="my-4"></div>
+                
+                <div id="roulette-offer" class="hidden mt-6 pt-6 border-t border-white/10">
+                    <p class="text-yellow-500 font-bold mb-4 uppercase tracking-widest text-sm">¿Arriesgar ganancia por un multiplicador?</p>
+                    <div id="wheel-container" class="mb-6 scale-75">
+                        <div class="wheel-pointer"></div>
+                        <canvas id="wheel"></canvas>
+                    </div>
+                    <div class="flex gap-4">
+                        <button onclick="collectOnly()" class="flex-1 py-3 border border-white/20 rounded-xl hover:bg-white/5 transition">Cobrar Seguro</button>
+                        <button id="spin-btn" onclick="spinWheel()" class="flex-1 py-3 neon-btn rounded-xl">Girar Ruleta</button>
+                    </div>
+                </div>
+
+                <div id="no-win-actions" class="hidden mt-6">
+                    <button onclick="closeModal()" class="neon-btn w-full py-3 rounded-xl">Intentar de Nuevo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('race-canvas');
+        const ctx = canvas.getContext('2d');
+        const wheelCanvas = document.getElementById('wheel');
+        const wheelCtx = wheelCanvas.getContext('2d');
+
+        const horseNamesPool = ["DIABLO", "RAYO", "BRUJO", "TITÁN", "CAOS", "AZAR", "TRUENO", "FÉNIX", "PEGASO", "CENTELLA", "TORNADO", "RELÁMPAGO"];
+        const horseColors = ["#FFD700", "#FF4D4D", "#4D94FF", "#50FA7B", "#FF79C6", "#BD93F9"];
+        
+        let horses = [];
+        let balance = 5000;
+        let currentBet = 500;
+        let selectedId = null;
+        let isRacing = false;
+        let lastWinAmount = 0;
+        let animationId = null;
+
+        const wheelSectors = [
+            { label: "x2", color: "#22c55e", mult: 2 },
+            { label: "PIERDES", color: "#ef4444", mult: 0 },
+            { label: "x3", color: "#3b82f6", mult: 3 },
+            { label: "PIERDES", color: "#ef4444", mult: 0 },
+            { label: "x4", color: "#a855f7", mult: 4 },
+            { label: "PIERDES", color: "#ef4444", mult: 0 },
+            { label: "x2", color: "#22c55e", mult: 2 },
+            { label: "PIERDES", color: "#ef4444", mult: 0 }
+        ];
+
+        function randomizeMarket() {
+            const oddsOptions = [2.0, 3.5, 5.2, 12.0, 25.0, 50.0];
+            const shuffledOdds = [...oddsOptions].sort(() => Math.random() - 0.5);
+            const names = [...horseNamesPool].sort(() => Math.random() - 0.5).slice(0, 6);
+            
+            horses = names.map((name, index) => {
+                const odds = shuffledOdds[index];
+                // Probabilidad visual aproximada basada en la cuota
+                const probability = (100 / odds * 0.9).toFixed(1);
+                
+                return {
+                    id: index,
+                    name: name,
+                    color: horseColors[index],
+                    odds: odds,
+                    probability: probability,
+                    angle: 0,
+                    laps: 0,
+                    finished: false,
+                    baseSpeed: 0.005 + (Math.random() * 0.001)
+                };
+            });
+            selectedId = null;
+            renderSelectors();
+            drawWheel();
+        }
+
+        function drawWheel() {
+            wheelCanvas.width = 300;
+            wheelCanvas.height = 300;
+            const arc = (Math.PI * 2) / wheelSectors.length;
+            wheelSectors.forEach((s, i) => {
+                const angle = i * arc;
+                wheelCtx.fillStyle = s.color;
+                wheelCtx.beginPath();
+                wheelCtx.moveTo(150, 150);
+                wheelCtx.arc(150, 150, 145, angle, angle + arc);
+                wheelCtx.fill();
+                
+                wheelCtx.save();
+                wheelCtx.translate(150, 150);
+                wheelCtx.rotate(angle + arc / 2);
+                wheelCtx.fillStyle = "#fff";
+                wheelCtx.font = "bold 16px Montserrat";
+                wheelCtx.textAlign = "center";
+                wheelCtx.fillText(s.label, 80, 5);
+                wheelCtx.restore();
+            });
+        }
+
+        function renderSelectors() {
+            const container = document.getElementById('horse-selectors');
+            container.innerHTML = '';
+            horses.forEach(h => {
+                container.innerHTML += `
+                    <div onclick="selectHorse(${h.id})" id="card-${h.id}" class="bet-card p-3 rounded-xl cursor-pointer flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full border-2 border-white/20 flex items-center justify-center" style="background-color: ${h.color}44; color: ${h.color}">
+                                🐎
+                            </div>
+                            <div>
+                                <p class="text-xs font-bold tracking-tight">${h.name}</p>
+                                <p class="text-[10px] opacity-60">Prob: ${h.probability}%</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-yellow-500 font-black">x${h.odds}</p>
+                            <p class="text-[9px] opacity-40 uppercase">Cuota</p>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        function selectHorse(id) {
+            if (isRacing) return;
+            selectedId = id;
+            document.querySelectorAll('.bet-card').forEach(c => c.classList.remove('selected'));
+            document.getElementById(`card-${id}`).classList.add('selected');
+        }
+
+        function adjustBet(val) {
+            if (isRacing) return;
+            const next = currentBet + val;
+            if (next >= 500 && next <= balance) currentBet = next;
+            else if (next > balance) currentBet = balance;
+            updateStats();
+        }
+
+        function updateStats() {
+            document.getElementById('balance').innerText = `$${balance.toLocaleString()}`;
+            document.getElementById('bet-amount').innerText = `$${currentBet}`;
+        }
+
+        function drawHorse(ctx, x, y, angle, color) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(angle + Math.PI/2);
+            
+            // Cuerpo del caballo
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.ellipse(0, 0, 12, 6, 0, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Cuello/Cabeza
+            ctx.beginPath();
+            ctx.moveTo(8, -2);
+            ctx.lineTo(15, -8);
+            ctx.lineTo(18, -6);
+            ctx.lineTo(12, 2);
+            ctx.fill();
+
+            // Patas (simples líneas de movimiento)
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            const legMove = Math.sin(Date.now() / 50) * 5;
+            ctx.beginPath();
+            ctx.moveTo(-5, 4); ctx.lineTo(-5 + legMove, 10);
+            ctx.moveTo(5, 4); ctx.lineTo(5 - legMove, 10);
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        function drawTrack() {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Césped exterior
+            ctx.fillStyle = '#0a2e0a';
+            ctx.beginPath(); ctx.arc(centerX, centerY, 395, 0, Math.PI * 2); ctx.fill();
+            
+            // Arena de pista
+            ctx.strokeStyle = '#3d2b1f';
+            ctx.lineWidth = 140;
+            ctx.beginPath(); ctx.arc(centerX, centerY, 310, 0, Math.PI * 2); ctx.stroke();
+            
+            // Bordes
+            ctx.strokeStyle = 'rgba(212, 175, 55, 0.4)';
+            ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.arc(centerX, centerY, 380, 0, Math.PI * 2); ctx.stroke();
+            ctx.beginPath(); ctx.arc(centerX, centerY, 240, 0, Math.PI * 2); ctx.stroke();
+
+            // Línea de meta
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 8;
+            ctx.beginPath();
+            ctx.moveTo(centerX + 240, centerY);
+            ctx.lineTo(centerX + 380, centerY);
+            ctx.stroke();
+        }
+
+        function startRace() {
+            if (selectedId === null) return alert("Selecciona un caballo por su color/nombre");
+            if (isRacing || balance < currentBet) return;
+            balance -= currentBet;
+            updateStats();
+            isRacing = true;
+            document.getElementById('race-btn').disabled = true;
+            animate();
+        }
+
+        function animate() {
+            drawTrack();
+            let winner = null;
+            horses.forEach((h, i) => {
+                const radius = 260 + (i * 22);
+                if (!h.finished) {
+                    // Motor de azar equilibrado (zancadas aleatorias + empujones ocasionales)
+                    const randomStride = Math.random() * 0.005;
+                    const burst = Math.random() > 0.993 ? 0.015 : 0;
+                    h.angle += h.baseSpeed + randomStride + burst;
+
+                    if (h.angle >= Math.PI * 2) { 
+                        h.angle -= Math.PI * 2; 
+                        h.laps++; 
+                        if (h.laps >= 2) { h.finished = true; if (!winner) winner = h; } 
+                    }
+                }
+                const x = 400 + Math.cos(h.angle) * radius;
+                const y = 400 + Math.sin(h.angle) * radius;
+                
+                drawHorse(ctx, x, y, h.angle, h.color);
+            });
+
+            if (winner) endRace(winner);
+            else animationId = requestAnimationFrame(animate);
+        }
+
+        function endRace(winner) {
+            isRacing = false;
+            const won = winner.id === selectedId;
+            lastWinAmount = won ? Math.floor(currentBet * winner.odds) : 0;
+            
+            setTimeout(() => {
+                document.getElementById('result-modal').classList.remove('hidden');
+                document.getElementById('modal-title').innerText = won ? "¡VICTORIA!" : "DERROTA";
+                document.getElementById('modal-title').style.color = won ? "#fcc200" : "#ef4444";
+                document.getElementById('modal-body').innerHTML = `
+                    <div class="flex items-center justify-center gap-4 mb-4">
+                        <div class="w-12 h-12 rounded-full border-4" style="border-color: ${winner.color}; background: ${winner.color}22"></div>
+                        <p class="text-2xl font-bold">${winner.name}</p>
+                    </div>
+                    <p class="text-4xl font-black ${won ? 'text-green-400' : 'text-white/20'}">$${lastWinAmount.toLocaleString()}</p>
+                `;
+                
+                if (won) {
+                    document.getElementById('roulette-offer').classList.remove('hidden');
+                    document.getElementById('no-win-actions').classList.add('hidden');
+                } else {
+                    document.getElementById('roulette-offer').classList.add('hidden');
+                    document.getElementById('no-win-actions').classList.remove('hidden');
+                }
+            }, 600);
+        }
+
+        function spinWheel() {
+            const spinBtn = document.getElementById('spin-btn');
+            spinBtn.disabled = true;
+            const randomRotation = 360 * 6 + Math.floor(Math.random() * 360);
+            const wheel = document.getElementById('wheel');
+            wheel.style.transform = `rotate(${randomRotation}deg)`;
+
+            setTimeout(() => {
+                const actualDegrees = randomRotation % 360;
+                const sectorIndex = Math.floor(((360 - (actualDegrees - 90)) % 360) / (360 / wheelSectors.length));
+                const result = wheelSectors[sectorIndex];
+
+                lastWinAmount = Math.floor(lastWinAmount * result.mult);
+                
+                document.getElementById('modal-body').innerHTML = `
+                    <p class="text-xl mb-2">¡La ruleta marca: ${result.label}!</p>
+                    <p class="text-5xl font-black ${result.mult > 0 ? 'text-green-400' : 'text-red-500'}">
+                        $${lastWinAmount.toLocaleString()}
+                    </p>
+                `;
+
+                setTimeout(() => {
+                    balance += lastWinAmount;
+                    closeModal();
+                }, 2500);
+            }, 4000);
+        }
+
+        function collectOnly() {
+            balance += lastWinAmount;
+            closeModal();
+        }
+
+        function closeModal() {
+            document.getElementById('result-modal').classList.add('hidden');
+            document.getElementById('wheel').style.transform = `rotate(0deg)`;
+            document.getElementById('spin-btn').disabled = false;
+            document.getElementById('race-btn').disabled = false;
+            if (balance < 500) balance = 1000;
+            updateStats();
+            randomizeMarket();
+        }
+
+        window.onload = () => {
+            canvas.width = 800; canvas.height = 800;
+            randomizeMarket();
+            updateStats();
+        };
+    </script>
+</body>
+</html>

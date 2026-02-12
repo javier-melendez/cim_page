@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bolirana La Popular - Clásica</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Uncial+Antiqua&family=Roboto:wght@400;900&display=swap');
+
+        body {
+            background-color: #1a0f0a;
+            color: #f3e5ab;
+            font-family: 'Roboto', sans-serif;
+            overflow: hidden;
+            touch-action: none;
+            margin: 0;
+        }
+
+        .titulo-tradicional {
+            font-family: 'Uncial Antiqua', serif;
+            text-shadow: 3px 3px 0px #000;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: radial-gradient(circle, #4e342e 0%, #1a0f0a 100%);
+        }
+
+        canvas {
+            background: #5d4037; 
+            border: 15px solid #3d2616;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.9), inset 0 0 100px rgba(0,0,0,0.5);
+            cursor: crosshair;
+            max-width: 95vw;
+            max-height: 75vh;
+        }
+
+        .marcador {
+            background: linear-gradient(145deg, #2d1e12, #1a0f0a);
+            border: 2px solid #d4af37;
+            padding: 15px 40px;
+            border-radius: 20px;
+            margin: 15px 0;
+            text-align: center;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+
+        #feedback {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 6rem;
+            font-weight: 900;
+            color: #d4af37;
+            pointer-events: none;
+            text-shadow: 0 0 30px rgba(212, 175, 55, 0.9), 4px 4px 0 #000;
+            opacity: 0;
+            z-index: 10;
+            text-align: center;
+            font-family: 'Uncial Antiqua', serif;
+        }
+
+        .instrucciones {
+            position: absolute;
+            bottom: 10px;
+            color: #8d6e63;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div class="mt-4">
+        <h1 class="titulo-tradicional text-4xl text-yellow-600 text-center">BOLIRANA LA FAVORITA</h1>
+    </div>
+
+    <div class="marcador">
+        <div class="flex justify-between items-center gap-10">
+            <div>
+                <p class="text-[10px] uppercase text-yellow-700 font-bold">Puntos</p>
+                <p id="score" class="text-4xl font-black text-white leading-none">0</p>
+            </div>
+            <div class="h-12 w-px bg-yellow-900"></div>
+            <div>
+                <p class="text-[10px] uppercase text-yellow-700 font-bold">Lanzamientos</p>
+                <p id="balls" class="text-4xl font-black text-yellow-500 leading-none">6</p>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+    
+    <div id="feedback">¡RANA!</div>
+    <div class="instrucciones">Arrastra la bola hacia atrás para apuntar</div>
+</div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreElement = document.getElementById('score');
+    const ballsElement = document.getElementById('balls');
+    const feedback = document.getElementById('feedback');
+
+    let width, height;
+    let score = 0;
+    let ballsLeft = 6;
+    let isDragging = false;
+    let dragStart = { x: 0, y: 0 };
+    let dragCurrent = { x: 0, y: 0 };
+
+    const holes = [];
+    let ball = {
+        x: 0, y: 0, vx: 0, vy: 0, 
+        baseRadius: 16,
+        radius: 16, 
+        active: false,
+        z: 1 // Profundidad
+    };
+
+    function drawRana(x, y, size) {
+        ctx.save();
+        ctx.translate(x, y);
+        
+        // Sombra debajo de la rana
+        ctx.fillStyle = "rgba(0,0,0,0.4)";
+        ctx.beginPath();
+        ctx.ellipse(0, size*0.4, size*1.2, size*0.6, 0, 0, Math.PI*2);
+        ctx.fill();
+
+        // Cuerpo
+        ctx.fillStyle = "#388e3c";
+        ctx.beginPath();
+        ctx.ellipse(0, 0, size, size * 0.85, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#1b5e20";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+        // Ojos saltones
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(-size * 0.5, -size * 0.7, size * 0.35, 0, Math.PI * 2);
+        ctx.arc(size * 0.5, -size * 0.7, size * 0.35, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        
+        ctx.fillStyle = "#000000";
+        ctx.beginPath();
+        ctx.arc(-size * 0.5, -size * 0.8, size * 0.15, 0, Math.PI * 2);
+        ctx.arc(size * 0.5, -size * 0.8, size * 0.15, 0, Math.PI * 2);
+        ctx.fill();
+
+        // La Boca (Hueco principal)
+        ctx.fillStyle = "#1a0f0a";
+        ctx.beginPath();
+        ctx.ellipse(0, size * 0.1, size * 0.6, size * 0.4, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = "#ffd700";
+        ctx.lineWidth = 4;
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
+    function init() {
+        resize();
+        resetBall();
+        animate();
+    }
+
+    function resize() {
+        const h = window.innerHeight * 0.7;
+        height = Math.min(h, 800);
+        width = height * 0.65;
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        createHoles();
+        resetBall();
+    }
+
+    function createHoles() {
+        holes.length = 0;
+        const cx = width / 2;
+
+        // Rana (5000)
+        holes.push({ x: cx, y: height * 0.2, r: 35, points: 5000, type: 'rana', color: '#ffd700' });
+        
+        // Bocín (1000)
+        holes.push({ x: cx, y: height * 0.38, r: 28, points: 1000, type: 'bocin', color: '#c0c0c0' });
+
+        // Huecos de 500
+        holes.push({ x: width * 0.25, y: height * 0.3, r: 24, points: 500, type: 'hole', color: '#cd7f32' });
+        holes.push({ x: width * 0.75, y: height * 0.3, r: 24, points: 500, type: 'hole', color: '#cd7f32' });
+        
+        // Huecos de 200
+        holes.push({ x: width * 0.3, y: height * 0.55, r: 24, points: 200, type: 'hole', color: '#8b4513' });
+        holes.push({ x: width * 0.7, y: height * 0.55, r: 24, points: 200, type: 'hole', color: '#8b4513' });
+    }
+
+    function resetBall() {
+        ball.active = false;
+        ball.x = width / 2;
+        ball.y = height * 0.88;
+        ball.vx = 0;
+        ball.vy = 0;
+        ball.z = 1;
+    }
+
+    function triggerFeedback(text) {
+        feedback.innerText = text;
+        feedback.style.opacity = "1";
+        feedback.style.transform = "translate(-50%, -50%) scale(1.5)";
+        feedback.style.transition = "none";
+        
+        setTimeout(() => {
+            feedback.style.transition = "all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)";
+            feedback.style.opacity = "0";
+            feedback.style.transform = "translate(-50%, -100%) scale(0.5)";
+        }, 100);
+    }
+
+    function handleStart(ex, ey) {
+        if (ball.active || ballsLeft <= 0) return;
+        const rect = canvas.getBoundingClientRect();
+        const x = (ex - rect.left) * (canvas.width / rect.width);
+        const y = (ey - rect.top) * (canvas.height / rect.height);
+        
+        if (Math.hypot(x - ball.x, y - ball.y) < 60) {
+            isDragging = true;
+            dragStart = { x: ball.x, y: ball.y };
+            dragCurrent = { x, y };
+        }
+    }
+
+    function handleMove(ex, ey) {
+        if (!isDragging) return;
+        const rect = canvas.getBoundingClientRect();
+        dragCurrent = { 
+            x: (ex - rect.left) * (canvas.width / rect.width), 
+            y: (ey - rect.top) * (canvas.height / rect.height) 
+        };
+    }
+
+    function handleEnd() {
+        if (!isDragging) return;
+        isDragging = false;
+
+        const dx = dragStart.x - dragCurrent.x;
+        const dy = dragStart.y - dragCurrent.y;
+        
+        // Lanzamiento
+        ball.vx = dx * 0.14;
+        ball.vy = dy * 0.14;
+
+        if (Math.abs(ball.vy) > 1) {
+            ball.active = true;
+            ballsLeft--;
+            ballsElement.innerText = ballsLeft;
+        }
+    }
+
+    canvas.addEventListener('mousedown', e => handleStart(e.clientX, e.clientY));
+    window.addEventListener('mousemove', e => handleMove(e.clientX, e.clientY));
+    window.addEventListener('mouseup', handleEnd);
+
+    canvas.addEventListener('touchstart', e => { e.preventDefault(); handleStart(e.touches[0].clientX, e.touches[0].clientY); });
+    window.addEventListener('touchmove', e => { handleMove(e.touches[0].clientX, e.touches[0].clientY); });
+    window.addEventListener('touchend', handleEnd);
+
+    function update() {
+        if (!ball.active) return;
+
+        ball.x += ball.vx;
+        ball.y += ball.vy;
+
+        // Fricción realista
+        ball.vx *= 0.98;
+        ball.vy *= 0.98;
+
+        // Efecto de perspectiva (se encoge al subir)
+        ball.z = 0.65 + (ball.y / height) * 0.35;
+        ball.radius = ball.baseRadius * ball.z;
+
+        // Rebotes
+        if (ball.x < ball.radius || ball.x > width - ball.radius) {
+            ball.vx *= -0.7;
+            ball.x = ball.x < ball.radius ? ball.radius : width - ball.radius;
+        }
+        if (ball.y < ball.radius) {
+            ball.vy *= -0.7;
+            ball.y = ball.radius;
+        }
+
+        // Colisión con huecos
+        holes.forEach(hole => {
+            const dist = Math.hypot(ball.x - hole.x, ball.y - hole.y);
+            const speed = Math.hypot(ball.vx, ball.vy);
+
+            // Solo entra si la velocidad es razonable (no vuela por encima)
+            if (dist < hole.r * 0.8 && speed < 15) {
+                score += hole.points;
+                scoreElement.innerText = score;
+                
+                if (hole.type === 'rana') triggerFeedback("¡RANA!");
+                else if (hole.type === 'bocin') triggerFeedback("¡BOCÍN!");
+                else triggerFeedback(`+${hole.points}`);
+
+                resetBall();
+                checkEndGame();
+            }
+        });
+
+        if (speed() < 0.2) {
+            resetBall();
+            checkEndGame();
+        }
+    }
+
+    function speed() { return Math.hypot(ball.vx, ball.vy); }
+
+    function checkEndGame() {
+        if (ballsLeft === 0 && !ball.active) {
+            setTimeout(() => {
+                alert(`¡Tanda terminada!\nPuntaje: ${score}`);
+                score = 0;
+                ballsLeft = 6;
+                scoreElement.innerText = "0";
+                ballsElement.innerText = "6";
+                resetBall();
+            }, 800);
+        }
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, width, height);
+
+        // Mesa de Madera
+        const woodGrd = ctx.createLinearGradient(0, 0, 0, height);
+        woodGrd.addColorStop(0, "#3e2723");
+        woodGrd.addColorStop(1, "#5d4037");
+        ctx.fillStyle = woodGrd;
+        ctx.fillRect(0, 0, width, height);
+        
+        // Vetas de madera decorativas
+        ctx.strokeStyle = "rgba(0,0,0,0.1)";
+        ctx.lineWidth = 2;
+        for(let i=0; i<width; i+=30) {
+            ctx.beginPath();
+            ctx.moveTo(i, 0);
+            ctx.lineTo(i + (Math.sin(i)*20), height);
+            ctx.stroke();
+        }
+
+        // Dibujar elementos del tablero
+        holes.forEach(hole => {
+            if (hole.type === 'rana') {
+                drawRana(hole.x, hole.y, hole.r);
+            } else {
+                // Hueco físico
+                ctx.beginPath();
+                ctx.arc(hole.x, hole.y, hole.r, 0, Math.PI * 2);
+                ctx.fillStyle = "#1a0f0a";
+                ctx.fill();
+                ctx.strokeStyle = hole.color;
+                ctx.lineWidth = 3;
+                ctx.stroke();
+                
+                // Brillo del borde
+                ctx.beginPath();
+                ctx.arc(hole.x, hole.y, hole.r, -Math.PI*0.5, 0);
+                ctx.strokeStyle = "rgba(255,255,255,0.2)";
+                ctx.stroke();
+
+                ctx.fillStyle = hole.color;
+                ctx.font = "bold 14px Roboto";
+                ctx.textAlign = "center";
+                ctx.fillText(hole.points, hole.x, hole.y + hole.r + 20);
+            }
+        });
+
+        // Línea de tiro (Aiming)
+        if (isDragging) {
+            const dx = dragStart.x - dragCurrent.x;
+            const dy = dragStart.y - dragCurrent.y;
+            
+            ctx.beginPath();
+            ctx.setLineDash([8, 4]);
+            ctx.moveTo(ball.x, ball.y);
+            ctx.lineTo(ball.x + dx * 2, ball.y + dy * 2);
+            ctx.strokeStyle = "rgba(212, 175, 55, 0.3)";
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Círculo de origen
+            ctx.beginPath();
+            ctx.arc(dragStart.x, dragStart.y, 45, 0, Math.PI*2);
+            ctx.strokeStyle = "rgba(212, 175, 55, 0.1)";
+            ctx.stroke();
+        }
+
+        // La Bola (Esfera metálica con perspectiva)
+        const currentR = ball.radius;
+        const ballGrad = ctx.createRadialGradient(
+            ball.x - currentR*0.3, ball.y - currentR*0.3, currentR*0.1,
+            ball.x, ball.y, currentR
+        );
+        ballGrad.addColorStop(0, "#fff176");
+        ballGrad.addColorStop(0.4, "#fbc02d");
+        ballGrad.addColorStop(1, "#827717");
+
+        // Sombra de la bola
+        ctx.beginPath();
+        ctx.ellipse(ball.x, ball.y + currentR*0.2, currentR, currentR*0.5, 0, 0, Math.PI*2);
+        ctx.fillStyle = "rgba(0,0,0,0.3)";
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, currentR, 0, Math.PI * 2);
+        ctx.fillStyle = ballGrad;
+        ctx.fill();
+        
+        // Brillo metálico
+        ctx.beginPath();
+        ctx.arc(ball.x - currentR*0.3, ball.y - currentR*0.3, currentR*0.2, 0, Math.PI*2);
+        ctx.fillStyle = "rgba(255,255,255,0.4)";
+        ctx.fill();
+    }
+
+    function animate() {
+        update();
+        draw();
+        requestAnimationFrame(animate);
+    }
+
+    window.addEventListener('resize', resize);
+    init();
+
+</script>
+</body>
+</html>

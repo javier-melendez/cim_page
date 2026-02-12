@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Muestrario Dinámico | Proyectos Web</title>
+    <!-- Tailwind CSS para estilos rápidos -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Swiper CSS para el carrusel -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+        
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #0f172a; /* Fondo oscuro profundo */
+        }
+
+        .swiper {
+            width: 100%;
+            padding-top: 50px;
+            padding-bottom: 80px;
+        }
+
+        .swiper-slide {
+            background-position: center;
+            background-size: cover;
+            width: 300px;
+            height: 400px;
+            filter: blur(2px) grayscale(0.5);
+            transition: all 0.5s ease;
+            opacity: 0.5;
+        }
+
+        .swiper-slide-active {
+            filter: blur(0) grayscale(0);
+            opacity: 1;
+            transform: scale(1.1);
+            z-index: 10;
+        }
+
+        .project-card {
+            background: #1e293b;
+            border: 1px solid rgba(255,255,255,0.1);
+            height: 100%;
+            border-radius: 24px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .image-box {
+            height: 60%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .gradient-overlay {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.8) 0%, rgba(168, 85, 247, 0.8) 100%);
+        }
+
+        /* Personalización de los botones de navegación */
+        .swiper-button-next, .swiper-button-prev {
+            color: #818cf8 !important;
+            background: rgba(255, 255, 255, 0.05);
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            backdrop-filter: blur(5px);
+        }
+
+        .swiper-button-next:after, .swiper-button-prev:after {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .swiper-pagination-bullet-active {
+            background: #818cf8 !important;
+        }
+    </style>
+</head>
+<body class="text-white overflow-x-hidden">
+
+    <!-- Encabezado -->
+    <header class="py-10 text-center relative z-20">
+        <h1 class="text-4xl md:text-5xl font-extrabold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">
+            Showcase de APPS
+        </h1>
+        <p class="text-slate-400 max-w-lg mx-auto px-4">
+            Desliza para explorar los sitios web creados por los grupos de este ciclo.
+        </p>
+    </header>
+
+    <!-- Contenedor del Carrusel -->
+    <main class="relative px-4">
+        <div class="swiper mySwiper">
+            <div class="swiper-wrapper">
+                
+                <!-- Slide Grupo 1 -->
+                <div class="swiper-slide">
+                    <div class="project-card shadow-2xl">
+                        <div class="image-box">
+                            <img src="grupo_1/imagen_1.jpg" alt="Proyecto 1" class="w-full h-full object-cover"
+                                 onerror="this.parentElement.innerHTML='<div class=\'w-full h-full gradient-overlay flex items-center justify-center text-white font-bold\'>Grupo 1</div>'">
+                        </div>
+                        <div class="p-6 flex flex-col justify-between flex-grow text-center">
+                            <h3 class="text-xl font-bold mb-4">Proyecto 01</h3>
+                            <a href="grupo_1/index.html" class="bg-indigo-600 hover:bg-indigo-500 text-white py-2 px-4 rounded-xl transition-all font-semibold">
+                                Ver Web
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide Grupo 2 -->
+                <div class="swiper-slide">
+                    <div class="project-card shadow-2xl">
+                        <div class="image-box">
+                            <img src="grupo_2/imagen_2.jpg" alt="Proyecto 2" class="w-full h-full object-cover"
+                                 onerror="this.parentElement.innerHTML='<div class=\'w-full h-full gradient-overlay flex items-center justify-center text-white font-bold\'>Grupo 2</div>'">
+                        </div>
+                        <div class="p-6 flex flex-col justify-between flex-grow text-center">
+                            <h3 class="text-xl font-bold mb-4">Proyecto 02</h3>
+                            <a href="grupo_2/grupo2.html" class="bg-indigo-600 hover:bg-indigo-500 text-white py-2 px-4 rounded-xl transition-all font-semibold">
+                                Ver Web
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide Grupo 3 -->
+                <div class="swiper-slide">
+                    <div class="project-card shadow-2xl">
+                        <div class="image-box">
+                            <img src="grupo_3/imagen_3.jpeg" alt="Proyecto 3" class="w-full h-full object-cover"
+                                 onerror="this.parentElement.innerHTML='<div class=\'w-full h-full gradient-overlay flex items-center justify-center text-white font-bold\'>Grupo 3</div>'">
+                        </div>
+                        <div class="p-6 flex flex-col justify-between flex-grow text-center">
+                            <h3 class="text-xl font-bold mb-4">Proyecto 03</h3>
+                            <a href="grupo_3/grupo_3.html" class="bg-indigo-600 hover:bg-indigo-500 text-white py-2 px-4 rounded-xl transition-all font-semibold">
+                                Ver Web
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide Grupo 4 -->
+                <div class="swiper-slide">
+                    <div class="project-card shadow-2xl">
+                        <div class="image-box">
+                            <img src="grupo_4/Grupo4.png" alt="Proyecto 4" class="w-full h-full object-cover"
+                                 onerror="this.parentElement.innerHTML='<div class=\'w-full h-full gradient-overlay flex items-center justify-center text-white font-bold\'>Grupo 4</div>'">
+                        </div>
+                        <div class="p-6 flex flex-col justify-between flex-grow text-center">
+                            <h3 class="text-xl font-bold mb-4">Proyecto 04</h3>
+                            <a href="grupo_4/grupo_4.html" class="bg-indigo-600 hover:bg-indigo-500 text-white py-2 px-4 rounded-xl transition-all font-semibold">
+                                Ver Web
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide Grupo 5 -->
+                <div class="swiper-slide">
+                    <div class="project-card shadow-2xl">
+                        <div class="image-box">
+                            <img src="grupo_5/Grupo5.jpeg" alt="Proyecto 5" class="w-full h-full object-cover"
+                                 onerror="this.parentElement.innerHTML='<div class=\'w-full h-full gradient-overlay flex items-center justify-center text-white font-bold\'>Grupo 5</div>'">
+                        </div>
+                        <div class="p-6 flex flex-col justify-between flex-grow text-center">
+                            <h3 class="text-xl font-bold mb-4">Proyecto 05</h3>
+                            <a href="grupo_5/Grupo5.html" class="bg-indigo-600 hover:bg-indigo-500 text-white py-2 px-4 rounded-xl transition-all font-semibold">
+                                Ver Web
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide Grupo 6 -->
+                <div class="swiper-slide">
+                    <div class="project-card shadow-2xl">
+                        <div class="image-box">
+                            <img src="grupo_6/Grupo6.png" alt="Proyecto 6" class="w-full h-full object-cover"
+                                 onerror="this.parentElement.innerHTML='<div class=\'w-full h-full gradient-overlay flex items-center justify-center text-white font-bold\'>Grupo 6</div>'">
+                        </div>
+                        <div class="p-6 flex flex-col justify-between flex-grow text-center">
+                            <h3 class="text-xl font-bold mb-4">Proyecto 06</h3>
+                            <a href="grupo_6/grupo_6.html" class="bg-indigo-600 hover:bg-indigo-500 text-white py-2 px-4 rounded-xl transition-all font-semibold">
+                                Ver Web
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Slide Grupo 7 -->
+                <div class="swiper-slide">
+                    <div class="project-card shadow-2xl">
+                        <div class="image-box">
+                            <img src="grupo_7/Grupo7.jpeg" alt="Proyecto 7" class="w-full h-full object-cover"
+                                 onerror="this.parentElement.innerHTML='<div class=\'w-full h-full gradient-overlay flex items-center justify-center text-white font-bold\'>Grupo 7</div>'">
+                        </div>
+                        <div class="p-6 flex flex-col justify-between flex-grow text-center">
+                            <h3 class="text-xl font-bold mb-4">Proyecto 07</h3>
+                            <a href="grupo_7/grupo_7.html" class="bg-indigo-600 hover:bg-indigo-500 text-white py-2 px-4 rounded-xl transition-all font-semibold">
+                                Ver Web
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            
+            <!-- Controles -->
+            <div class="swiper-button-next"></div>
+            <div class="swiper-button-prev"></div>
+            <div class="swiper-pagination"></div>
+        </div>
+    </main>
+
+    <footer class="text-center py-10 text-slate-500 text-sm">
+        <p>Usa las flechas o arrastra para navegar</p>
+    </footer>
+
+    <!-- Scripts de Swiper -->
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+
+    <!-- Inicialización del Carrusel -->
+    <script>
+        var swiper = new Swiper(".mySwiper", {
+            effect: "coverflow",
+            grabCursor: true,
+            centeredSlides: true,
+            slidesPerView: "auto",
+            loop: true,
+            coverflowEffect: {
+                rotate: 0,
+                stretch: 0,
+                depth: 100,
+                modifier: 2.5,
+                slideShadows: false,
+            },
+            pagination: {
+                el: ".swiper-pagination",
+                clickable: true,
+            },
+            navigation: {
+                nextEl: ".swiper-button-next",
+                prevEl: ".swiper-button-prev",
+            },
+            autoplay: {
+                delay: 3000,
+                disableOnInteraction: false,
+            },
+        });
+    </script>
+</body>
+</html>
